@@ -1,11 +1,224 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
-
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+import Layout from "@/layouts/Layout.astro";
+import "@/styles/global.css";
+import Nav from "@/components/Nav.astro";
+import Footer from "@/components/Footer.astro";
 ---
 
 <Layout>
-	<Welcome />
+  <Nav />
+
+  <div class="flex items-start justify-center w-full gap-4">
+    <div class="flex border-2 h-27 w-100 justify-center rounded-2xl text-gray-400">
+      <span
+        id="timerDisplay"
+        class="justify-center font-semibold text-8xl text-indigo-600 text-center"
+        >00:00:00</span 
+      >
+    </div>
+  </div>
+
+<div class="flex items-start justify-center w-full gap-4">
+  <div>
+    <label for="Hours" class="flex mb-2 text-sm font-medium">Hours</label>
+    <input type="number" id="Hours" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="0" min="0" />
+  </div>
+
+  <div>
+    <label for="Minutes" class="flex mb-2 text-sm font-medium">Minutes</label>
+    <input type="number" id="Minutes" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="0" min="0" />
+  </div>
+
+  <div>
+    <label for="Seconds" class="flex mb-2 text-sm font-medium">Seconds</label>
+    <input type="number" id="Seconds" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="0" min="0" />
+  </div>
+</div>
+
+
+  <div class="flex items-start justify-center w-full gap-4">
+    <div>
+      <button type="button" id="startBtn" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Start</button>
+      <button type="button" id="pauseBtn" class="focus:outline-none text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:focus:ring-yellow-900">Pause</button>
+      <button type="button" id="resumeBtn" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Resume</button>
+      <button type="button" id="restartBtn" class="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">Restart</button>
+    </div>
+  </div>
+
+  
+
+<Footer />
 </Layout>
+
+<script is:inline>
+  // Inicializacion de variable globales
+
+  let timeoutID;
+  let intervalID;
+  let startTime;
+  let remainingTime;
+  let isPaused = false;
+
+  // TimerDisplay (HTML)
+
+  let TimerDisplay = document.getElementById("timerDisplay");
+
+  //Sonido de alarma para temporizador
+  const notificationSound = new Audio("/timer-app/src/sounds/timerSound.mp3");
+
+  // Pestaña de navegación
+  let TitlePage = document.getElementById("titlePage");
+
+  // Funcion de Inicio de temporizador
+
+  function startTimer() {
+    // Oculta los botones de inicio y reanudar
+    document.getElementById("startBtn").style.display = "none";
+    document.getElementById("resumeBtn").style.display = "none";
+
+    //date now
+    startTime = Date.now();
+
+    //DOM para los inputs
+    const hours = document.getElementById("Hours");
+    const minutes = document.getElementById("Minutes");
+    const seconds = document.getElementById("Seconds");
+
+    //Conversion de los valores del input a Number
+    let hoursValue = Number(hours.value);
+    let minutesValue = Number(minutes.value);
+    let secondsValue = Number(seconds.value);
+
+    //Conversion de los valores del input a milisegundos
+    let timeHours = hoursValue * 3600000;
+    let timeMinutes = minutesValue * 60000;
+    let timeSeconds = secondsValue * 1000;
+
+    //Sumatoria de las horas, minutos y segunods
+    remainingTime = timeHours + timeMinutes + timeSeconds;
+
+    // Código modificado
+    intervalID = setInterval(() => {
+      // Primero, resta el tiempo
+      remainingTime -= 1000;
+
+      if (remainingTime > 0) {
+        // Luego, formatea el tiempo restante y muéstralo
+        TimerDisplay.textContent = formatTime(remainingTime);
+        TitlePage.textContent = formatTime(remainingTime);
+      } else {
+        // Asegúrate de que al llegar a 0 se muestre correctamente
+        TitlePage.textContent = "Temporizador Finalizado";
+        TimerDisplay.textContent = "00:00:00";
+        clearInterval(intervalID);
+      }
+    }, 1000);
+
+    //Inicializacion de setTimeOut
+    timeoutID = setTimeout(() => {
+      clearInterval(intervalID);
+      TimerDisplay.textContent = "00:00:00";
+      notificationSound.play();
+    }, remainingTime);
+  }
+
+  const startBtn = document.getElementById("startBtn");
+  startBtn.addEventListener("click", startTimer);
+
+  //Funcion para reset del temporizador
+
+  function restartTimer() {
+    //Limpieza de los valores en los inputs
+    const hours = (document.getElementById("Hours").value = "");
+    const minutes = (document.getElementById("Minutes").value = "");
+    const seconds = (document.getElementById("Seconds").value = "");
+
+    //Limpieza del setTimeOut declarado e inicializado en la funcion startTimer()
+    clearTimeout(timeoutID);
+    clearInterval(intervalID);
+    TimerDisplay.textContent = "00:00:00";
+
+    document.getElementById("startBtn").style.display = "";
+    document.getElementById("pauseBtn").style.display = "";
+    document.getElementById("resumeBtn").style.display = "";
+    document.getElementById("restartBtn").style.display = "";
+
+    TitlePage.textContent = "Timer App";
+  }
+
+  const restartBtn = document.getElementById("restartBtn");
+  restartBtn.addEventListener("click", restartTimer);
+
+  //Funcion para pausar el temporizador
+
+  function pauseTimer() {
+    // Muestra los botones de inicio y reanudar al pausar
+    isPaused = true;
+    if (isPaused) {
+      clearTimeout(timeoutID);
+      clearInterval(intervalID);
+      document.getElementById("resumeBtn").style.display = "";
+      TitlePage.textContent = `${formatTime(remainingTime)} Pausado`;
+    }
+  }
+
+  const pauseBtn = document.getElementById("pauseBtn");
+  pauseBtn.addEventListener("click", pauseTimer);
+
+  // Funcion para reanudar el temporizador
+
+  function resumeTimer() {
+    if (isPaused === true && remainingTime > 0) {
+      document.getElementById("startBtn").style.display = "none";
+      document.getElementById("resumeBtn").style.display = "none";
+
+      startTime = Date.now();
+      clearInterval(intervalID);
+
+      timeoutID = setTimeout(() => {
+        notificationSound.play();
+      }, remainingTime);
+
+      intervalID = setInterval(() => {
+        // Primero, resta el tiempo
+        remainingTime -= 1000;
+
+        if (remainingTime > 0) {
+          // Luego, formatea el tiempo restante y muéstralo
+          TimerDisplay.textContent = formatTime(remainingTime);
+          TitlePage.textContent = formatTime(remainingTime);
+        } else {
+          // Asegúrate de que al llegar a 0 se muestre correctamente
+          TitlePage.textContent = "Temporizador Finalizado";
+          TimerDisplay.textContent = "00:00:00";
+          clearInterval(intervalID);
+        }
+      }, 1000);
+    }
+
+    isPaused = false;
+  }
+
+  const resumeBtn = document.getElementById("resumeBtn");
+  resumeBtn.addEventListener("click", resumeTimer);
+
+  // Funcion para dar formato al tiempo
+
+  function formatTime(ms) {
+    // Calcula el total de segundos
+    let totalSeconds = Math.floor(ms / 1000);
+
+    // Calcula horas, minutos y segundos a partir del total
+    let hours = Math.floor(totalSeconds / 3600);
+    let minutes = Math.floor((totalSeconds % 3600) / 60);
+    let seconds = totalSeconds % 60;
+
+    // Añade un cero a la izquierda si el número es menor que 10
+    hours = String(hours).padStart(2, "0");
+    minutes = String(minutes).padStart(2, "0");
+    seconds = String(seconds).padStart(2, "0");
+
+    // Retorna el formato final
+    return `${hours}:${minutes}:${seconds}`;
+  }
+</script>
